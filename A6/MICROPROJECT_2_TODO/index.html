@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="px-4 py-5">
+            <h1 class="text-2xl font-bold text-center mb-4">Todo App</h1>
+            <form id="todo-form" class="flex mb-4">
+                <input type="text" id="todo-input" placeholder="Add a new todo"
+                    class="flex-grow px-3 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit"
+                    class="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Add</button>
+            </form>
+            <div class="flex justify-between mb-4">
+                <select id="filter-select"
+                    class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all">All</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                </select>
+                <button id="clear-completed" class="text-sm text-gray-500 hover:text-gray-700">Clear Completed</button>
+            </div>
+            <ul id="todo-list" class="space-y-2"></ul>
+        </div>
+    </div>
+
+    <script>
+        class Todo {
+            constructor(id, text, completed = false) {
+                this.id = id;
+                this.text = text;
+                this.completed = completed;
+            }
+        }
+
+        class TodoApp {
+            constructor() {
+                this.todos = JSON.parse(localStorage.getItem('todos')) || [];
+                this.filter = 'all';
+
+                this.todoForm = document.getElementById('todo-form');
+                this.todoInput = document.getElementById('todo-input');
+                this.todoList = document.getElementById('todo-list');
+                this.filterSelect = document.getElementById('filter-select');
+                this.clearCompletedBtn = document.getElementById('clear-completed');
+
+                this.todoForm.addEventListener('submit', this.addTodo.bind(this));
+                this.filterSelect.addEventListener('change', this.changeFilter.bind(this));
+                this.clearCompletedBtn.addEventListener('click', this.clearCompleted.bind(this));
+
+                this.render();
+            }
+
+            addTodo(e) {
+                e.preventDefault();
+                const todoText = this.todoInput.value.trim();
+                if (todoText) {
+                    const newTodo = new Todo(Date.now(), todoText);
+                    this.todos.push(newTodo);
+                    this.saveTodos();
+                    this.todoInput.value = '';
+                    this.render();
+                }
+            }
+
+            toggleTodo(id) {
+                const todo = this.todos.find(t => t.id === id);
+                if (todo) {
+                    todo.completed = !todo.completed;
+                    this.saveTodos();
+                    this.render();
+                }
+            }
+
+            deleteTodo(id) {
+                this.todos = this.todos.filter(t => t.id !== id);
+                this.saveTodos();
+                this.render();
+            }
+
+            changeFilter(e) {
+                this.filter = e.target.value;
+                this.render();
+            }
+
+            clearCompleted() {
+                this.todos = this.todos.filter(t => !t.completed);
+                this.saveTodos();
+                this.render();
+            }
+
+            saveTodos() {
+                localStorage.setItem('todos', JSON.stringify(this.todos));
+            }
+
+            render() {
+                this.todoList.innerHTML = '';
+                const filteredTodos = this.getFilteredTodos();
+
+                filteredTodos.forEach(todo => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center bg-gray-100 px-4 py-2 rounded-lg';
+                    li.innerHTML = `
+                        <input type="checkbox" ${todo.completed ? 'checked' : ''} class="mr-2 form-checkbox h-5 w-5 text-blue-500">
+                        <span class="flex-grow ${todo.completed ? 'line-through text-gray-500' : ''}">${todo.text}</span>
+                        <button class="text-red-500 hover:text-red-700 focus:outline-none">
+                            <svg class="h-5 w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
+                                <path d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    `;
+
+                    const checkbox = li.querySelector('input[type="checkbox"]');
+                    checkbox.addEventListener('change', () => this.toggleTodo(todo.id));
+
+                    const deleteBtn = li.querySelector('button');
+                    deleteBtn.addEventListener('click', () => this.deleteTodo(todo.id));
+
+                    this.todoList.appendChild(li);
+                });
+            }
+
+            getFilteredTodos() {
+                switch (this.filter) {
+                    case 'active':
+                        return this.todos.filter(t => !t.completed);
+                    case 'completed':
+                        return this.todos.filter(t => t.completed);
+                    default:
+                        return this.todos;
+                }
+            }
+        }
+
+        new TodoApp();
+    </script>
+</body>
+
+</html>

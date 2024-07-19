@@ -1,0 +1,11 @@
+/* Custom styles for calculator */
+#calculator {
+    width: 300px;
+    /* Adjust the width as needed */
+    padding: 50px;
+}
+
+.calculator-button {
+    width: 100%;
+    max-width: 100%;
+}
